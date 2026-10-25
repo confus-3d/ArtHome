@@ -405,15 +405,37 @@ module.exports.onStart = function () {
     } else if (url.pathname === '/home') {
       invalidate('launcher returned'); state.leaving = false; resetTracking();
     }
-    var response = Object.assign({}, state, { art: art.getState() });
+    var response = Object.assign({}, state, { art: art.getState(), avisosApps: avisosApps });
     res.writeHead(200, { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(response));
   });
   server.listen(47790, '127.0.0.1');
   interval = setInterval(tick, 150);  // ArtHome: antes 300 ms
+  escucharApps();
   discoverCapability();
 };
 // ---- ArtHome ----------------------------------------------------------------------------
+// Prueba (solo apunta, no actúa): qué avisos da la tele cuando una app pasa a primer plano o
+// deja de estarlo, con la API pública tizen.application.addAppStatusChangeListener.
+var avisosApps = [];
+function escucharApps() {
+  try {
+    if (!tizen.application.addAppStatusChangeListener) { record('avisos', 'no disponible'); return; }
+    tizen.application.addAppStatusChangeListener(function (appId, activa) {
+      avisosApps.push({ at: Date.now(), app: appId, activa: activa });
+      if (avisosApps.length > 200) { avisosApps.shift(); }
+    });
+    record('avisos', 'escuchando');
+  } catch (e) { record('avisos', 'error: ' + (e && e.message)); }
+  // Nombres de apps del sistema que interesan, para reconocerlas en los avisos.
+  try {
+    tizen.application.getAppsInfo(function (lista) {
+      state.sistema = lista.filter(function (a) { return /plus|hub|home|csfs|art|viewer/i.test((a.name || '') + ' ' + a.id); })
+        .map(function (a) { return a.id + ' = ' + a.name; }).slice(0, 60);
+    }, function () {});
+  } catch (e) {}
+}
+
 function responder(res, codigo, tipo, cuerpo) {
   res.writeHead(codigo, { 'Access-Control-Allow-Origin': '*', 'Content-Type': tipo, 'Cache-Control': 'no-store' });
   res.end(cuerpo);
