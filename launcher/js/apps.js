@@ -84,7 +84,7 @@
   // nombre interno (comprobado con Disney+). Sale de la ruta de la carátula o del catálogo.
   apps.idVigilancia = function (app) {
     var cache = (app.icon || '').match(/apps_icon\/(?:all|FirstScreen)\/(\d+)\//);
-    return (cache && cache[1]) || A.catalog.preloadedStoreId(app.id) || app.id;
+    return (window.TIENDA && window.TIENDA[app.id]) || (cache && cache[1]) || A.catalog.preloadedStoreId(app.id) || app.id;
   };
 
   apps.byId = function (id) {
