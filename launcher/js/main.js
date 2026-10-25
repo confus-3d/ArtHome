@@ -1,56 +1,63 @@
-// Boot and key routing. Each layer gets keys in priority order: text entry, fireplace,
-// full-screen input, settings, then the home screen.
+// Arranque y reparto de teclas entre las tres pantallas (inicio, catálogo y ajustes).
 (function (A) {
   'use strict';
 
   var KEY = A.config.KEY;
+  var PANTALLAS = { inicio: A.inicio, catalogo: A.catalogo, ajustes: A.ajustes };
+  A.pantalla = 'inicio';
 
-  A.applyBackground = function () {
-    window.Backgrounds.setSpeed(A.settings.speed);
-    window.Backgrounds.apply(A.settings.background);
+  A.ir = function (nombre, opciones) {
+    Object.keys(PANTALLAS).forEach(function (n) { A.$(n).hidden = n !== nombre; });
+    A.pantalla = nombre;
+    PANTALLAS[nombre].alMostrar(opciones);
+    A.cabecera.pintar();
   };
+  A.redibujar = function () { if (A.pantalla === 'inicio') { A.inicio.render(); } };
 
   document.addEventListener('keydown', function (e) {
-    var k = e.keyCode, active = document.activeElement;
-    // Text entry: the on-screen keyboard owns the keys; OK/Done/Back finish.
-    if (active && active.tagName === 'INPUT') {
-      if (k === KEY.ENTER || k === KEY.BACK || k === KEY.ESC || k === KEY.IME_DONE || k === KEY.IME_CANCEL) {
-        e.preventDefault(); active.blur(); A.settingsUi.focus();
+    var k = e.keyCode, activo = document.activeElement;
+    // Escribiendo: el teclado en pantalla manda; OK o Hecho guardan, Atrás cancela.
+    if (activo && activo.tagName === 'INPUT') {
+      var guardar = k === KEY.ENTER || k === KEY.IME_DONE;
+      var cancelar = k === KEY.BACK || k === KEY.ESC || k === KEY.IME_CANCEL;
+      if (guardar || cancelar) {
+        e.preventDefault();
+        if (activo.id === 'campo-nombre') { A.catalogo.terminarNombre(guardar); } else { A.ajustes.terminarTexto(guardar); }
       }
       return;
     }
-    if (window.Fireplace.isOpen()) {
-      if (k === KEY.UP) { window.Fireplace.volumeUp(); } else if (k === KEY.DOWN) { window.Fireplace.volumeDown(); } else if (k === KEY.BACK || k === KEY.ESC || k === KEY.ENTER) { e.preventDefault(); window.Fireplace.close(); }
-      return;
-    }
-    if (A.inputs.watching) {
-      if (k === KEY.BACK || k === KEY.ESC || k === KEY.ENTER) { e.preventDefault(); A.inputs.leave(); }
-      return;
-    }
-    if (A.settingsUi.isOpen()) { return A.settingsUi.keydown(k, e); }
-    A.homeScreen.keydown(k, e);
-  });
-
-  document.addEventListener('keyup', function (e) {
-    if (A.settingsUi.isOpen() || A.inputs.watching || window.Fireplace.isOpen()) { return; }
-    A.homeScreen.keyup(e.keyCode);
+    var hecho = PANTALLAS[A.pantalla].tecla(k);
+    // Atrás nunca cierra ArtHome: en el inicio no hace nada.
+    if (hecho || k === KEY.BACK) { e.preventDefault(); }
   });
 
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) { A.clock.tick(); A.inputs.load(); }
+    if (document.hidden) { return; }
+    A.cabecera.pintar();
+    A.entradas.cargar(A.redibujar);
+    A.arte.refrescar();
   });
 
-  // ---- boot ----------------------------------------------------------------------
-  A.settings.load();
-  A.applyBackground();
-  A.clock.start();
+  // ---- arranque ----------------------------------------------------------------------
+  // En el navegador del Mac, encajar los 1920×1080 en la ventana.
+  if (!A.tizen) {
+    var encajar = function () {
+      var r = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      document.body.style.transformOrigin = '0 0';
+      document.body.style.transform = 'scale(' + r + ')';
+    };
+    window.addEventListener('resize', encajar); encajar();
+  }
+  A.prefs.cargar();
+  A.cabecera.start();
   A.network.start();
-  window.Weather.start(function () { return A.settings; });
+  A.arte.refrescar();
+  setInterval(function () { if (!document.hidden) { A.arte.refrescar(); } }, 120000);
   A.apps.load(function () {
-    if (A.settings.home === null) { A.settings.home = A.apps.defaultHome(); A.settings.save(); }
-    A.homeScreen.render();
-    A.inputs.load();
+    A.prefs.completar(A.apps.all);
+    A.entradas.cargar(function () { A.ir('inicio'); });
     A.homewatch.start();
+    A.homewatch.vigilante(A.prefs.vigilante);
     setTimeout(function () { A.homewatch.reportApps(A.apps.realIds); }, 1500);
   });
 })(window.AeroTizen);

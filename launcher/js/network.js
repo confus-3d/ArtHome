@@ -1,4 +1,4 @@
-// Top-bar connection indicator: Ethernet, Wi-Fi (with signal strength) or offline.
+// Indicador de conexión: cable, wifi (con su señal) o sin conexión. De AeroTizen (MIT).
 (function (A) {
   'use strict';
 
@@ -22,14 +22,14 @@
   function show(kind, strength) {
     var el = A.$('network');
     el.innerHTML = kind === 'ethernet' ? ICONS.ethernet : kind === 'offline' ? ICONS.offline : wifi(strength);
-    el.setAttribute('aria-label', kind === 'ethernet' ? 'Ethernet' : kind === 'offline' ? 'Offline' : 'Wi-Fi');
+    el.setAttribute('aria-label', kind === 'ethernet' ? 'Cable' : kind === 'offline' ? 'Sin conexión' : 'Wi-Fi');
     el.classList.toggle('offline', kind === 'offline');
   }
 
   function updateVisibility() {
     var el = A.$('network');
     // SVG elements do not expose the HTML hidden property on every TV.
-    if (A.settings.showNetwork === false) { el.setAttribute('hidden', ''); }
+    if (A.prefs.mostrarRed === false) { el.setAttribute('hidden', ''); }
     else { el.removeAttribute('hidden'); }
   }
 

@@ -1,0 +1,111 @@
+/* ArtHome · estilo Galería. La tele dibuja a 1920×1080 con Chromium 85: solo se animan
+   transform, opacity y color; nada de filtros ni desenfoques en vivo. */
+@font-face { font-family: 'Newsreader'; font-weight: 300; src: url(../fonts/newsreader-300.woff2) format('woff2'); }
+@font-face { font-family: 'Newsreader'; font-weight: 400; src: url(../fonts/newsreader-400.woff2) format('woff2'); }
+@font-face { font-family: 'Newsreader'; font-weight: 400; font-style: italic; src: url(../fonts/newsreader-400-italic.woff2) format('woff2'); }
+@font-face { font-family: 'Manrope'; font-weight: 400; src: url(../fonts/manrope-400.woff2) format('woff2'); }
+@font-face { font-family: 'Manrope'; font-weight: 500; src: url(../fonts/manrope-500.woff2) format('woff2'); }
+@font-face { font-family: 'Manrope'; font-weight: 600; src: url(../fonts/manrope-600.woff2) format('woff2'); }
+
+:root { --acento: #d9b77c; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0d0c0a; color: #f3eee4;
+  font-family: Manrope, 'Samsung One', sans-serif; }
+[hidden] { display: none !important; }
+
+.fondo { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; opacity: 0; transition: opacity .6s; }
+.fondo.listo { opacity: 1; }
+.velo { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px;
+  background: linear-gradient(180deg, rgba(13,12,10,.25) 0%, rgba(13,12,10,.05) 40%, rgba(13,12,10,.82) 78%, rgba(13,12,10,.92) 100%); }
+body.oscuro .velo { background: rgba(13,12,10,.66); }
+.pantalla { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; }
+
+/* ---- Inicio ---- */
+.hora { position: absolute; top: 56px; left: 96px; font-family: Newsreader, serif; font-weight: 300; font-size: 132px; line-height: 1; }
+.fecha { position: absolute; top: 200px; left: 100px; font-size: 26px; letter-spacing: 3px; text-transform: uppercase; opacity: .8; }
+.linea-estado { position: absolute; top: 246px; left: 100px; display: flex; align-items: center; gap: 16px; font-size: 24px; letter-spacing: 1px; opacity: .65; }
+.red { width: 26px; height: 26px; color: #f3eee4; }
+.red.offline { color: #d9826c; }
+.cartela { position: absolute; top: 72px; right: 96px; max-width: 760px; text-align: right; font-family: Newsreader, serif; }
+.cartela-titulo { font-size: 36px; font-style: italic; }
+.cartela-autor { font-size: 24px; opacity: .75; margin-top: 6px; }
+
+.dock { position: absolute; left: 96px; right: 96px; bottom: 150px; display: flex; flex-wrap: nowrap; align-items: flex-end; }
+.app { position: relative; flex: none; margin-right: 46px; padding-bottom: 18px; font-size: 34px; font-weight: 500;
+  color: rgba(243,238,228,.62); white-space: nowrap; transition: color .2s, transform .2s; }
+.app::before { content: ''; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--c);
+  transform: scaleX(0); transform-origin: left; transition: transform .25s; }
+.app.foco { color: #fff; transform: translateY(-6px); }
+.app.foco::before { transform: scaleX(1); }
+.punto { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 14px; background: var(--c);
+  vertical-align: middle; position: relative; top: -3px; }
+
+.barra { position: absolute; left: 96px; right: 96px; bottom: 64px; display: flex; border-top: 1px solid rgba(243,238,228,.18);
+  padding-top: 26px; font-size: 24px; letter-spacing: 1px; }
+.barra div { margin-right: 40px; color: rgba(243,238,228,.55); transition: color .2s; }
+.barra div.foco { color: #fff; }
+.barra .empuje { margin-left: auto; }
+
+/* ---- Cabecera común de Todas las apps y Ajustes ---- */
+.cabecera { position: absolute; top: 72px; left: 120px; right: 120px; display: flex; align-items: baseline; }
+.cabecera h1 { margin: 0 28px 0 0; font-family: Newsreader, serif; font-weight: 300; font-size: 84px; }
+.cuenta { font-family: Newsreader, serif; font-style: italic; font-size: 30px; opacity: .6; margin-right: 28px; }
+.hora-pequena { margin-left: auto; font-size: 28px; letter-spacing: 2px; opacity: .7; }
+.conmutar { font-size: 22px; padding: 8px 0; color: rgba(243,238,228,.6); border-bottom: 1px solid transparent; }
+.conmutar.foco { color: #fff; border-bottom-color: var(--acento); }
+
+/* ---- Todas las apps ---- */
+.leyenda { position: absolute; top: 212px; left: 120px; font-size: 20px; opacity: .55; }
+.leyenda b { color: var(--acento); font-weight: 400; }
+.columnas { position: absolute; top: 250px; left: 120px; width: 1160px; display: flex; }
+.grupo { width: 260px; flex: none; margin-right: 40px; }
+.grupo h2 { margin: 0 0 18px; font-size: 20px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; color: var(--acento); }
+.fila { display: flex; align-items: center; padding: 14px 0; font-size: 27px; white-space: nowrap; color: rgba(243,238,228,.62);
+  border-bottom: 1px solid rgba(243,238,228,.08); transition: color .2s, transform .2s; }
+.fila .punto { width: 12px; height: 12px; margin-right: 14px; top: 0; }
+.fila .fijada { margin-left: auto; font-size: 18px; color: var(--acento); }
+.fila.oculta { opacity: .38; font-style: italic; }
+.fila.foco { color: #fff; transform: translateX(16px); border-bottom-color: var(--acento); }
+.ficha { position: absolute; top: 250px; right: 120px; width: 460px; }
+.caratula { width: 460px; height: 150px; border-radius: 6px; background: #111; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; font-size: 34px; font-weight: 600; box-shadow: 0 24px 50px rgba(0,0,0,.45); }
+.caratula img { height: 150px; }
+.ficha h3 { margin: 22px 0 6px; font-family: Newsreader, serif; font-weight: 400; font-size: 40px; }
+.estado { font-family: Newsreader, serif; font-style: italic; font-size: 24px; opacity: .7; }
+.acciones { margin-top: 18px; }
+.accion { padding: 10px 0; font-size: 25px; border-bottom: 1px solid rgba(243,238,228,.1); color: rgba(243,238,228,.68);
+  transition: color .2s, transform .2s; }
+.accion.foco { color: #fff; transform: translateX(16px); border-bottom-color: var(--acento); }
+.pista { margin-top: 30px; font-family: Newsreader, serif; font-style: italic; font-size: 24px; opacity: .55; }
+.campo { display: block; width: 100%; box-sizing: border-box; margin-top: 24px; padding: 16px 0; background: transparent; border: 0;
+  border-bottom: 2px solid var(--acento); color: #fff; font: 400 40px Newsreader, serif; outline: none; }
+
+/* ---- Ajustes ---- */
+.secciones { position: absolute; top: 240px; left: 120px; width: 460px; }
+.seccion { position: relative; font-family: Newsreader, serif; font-size: 40px; padding: 14px 0; color: rgba(243,238,228,.5);
+  transition: color .2s, transform .2s; }
+.seccion::before { content: ''; position: absolute; left: -30px; top: 50%; width: 14px; height: 2px; background: var(--acento); opacity: 0; transition: opacity .2s; }
+.seccion.activa { color: #f3eee4; }
+.seccion.activa::before { opacity: .5; }
+.seccion.foco { color: #fff; transform: translateX(14px); }
+.seccion.foco::before { opacity: 1; }
+.marco-panel { position: absolute; top: 240px; left: 680px; right: 120px; bottom: 40px; overflow: hidden; }
+.panel { position: relative; padding: 0 30px 0 24px; margin-left: -24px; transition: transform .25s; }
+.intro { font-family: Newsreader, serif; font-style: italic; font-size: 30px; opacity: .7; margin: 0 0 30px; max-width: 980px; }
+.opcion { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; border-bottom: 1px solid rgba(243,238,228,.14);
+  font-size: 30px; transition: transform .2s; }
+.opcion .det { display: block; font-size: 22px; opacity: .55; margin-top: 6px; }
+.opcion .valor { font-size: 26px; color: rgba(243,238,228,.75); white-space: nowrap; margin-left: 30px; }
+.opcion.foco { transform: translateX(22px); border-bottom-color: var(--acento); }
+.opcion.foco .texto { color: #fff; }
+.opcion .campo { font-size: 32px; margin-top: 10px; }
+.interruptor { width: 84px; height: 44px; border-radius: 22px; background: rgba(243,238,228,.2); position: relative; flex: none; margin-left: 30px; }
+.interruptor::after { content: ''; position: absolute; top: 5px; left: 5px; width: 34px; height: 34px; border-radius: 50%; background: #f3eee4; transition: transform .2s; }
+.interruptor.on { background: var(--acento); }
+.interruptor.on::after { transform: translateX(40px); }
+
+.toast { position: absolute; left: 50%; top: 150px; transform: translateX(-50%); padding: 20px 36px; background: rgba(13,12,10,.9);
+  font-family: Newsreader, serif; font-size: 30px; font-style: italic; }
+
+/* Muestras de color en Ajustes y en «Cambiar color». */
+.muestra { display: inline-block; width: 26px; height: 26px; border-radius: 50%; margin-left: 14px; vertical-align: middle;
+  background: var(--m); box-shadow: 0 0 0 2px rgba(243,238,228,.25); }

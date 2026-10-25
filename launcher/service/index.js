@@ -9,8 +9,13 @@
 // needs two fresh "Art Mode off" replies and a recheck of the screen. Other TVs keep the
 // fast path (short grace period, direct relaunch). The launcher talks to this service over
 // http://127.0.0.1:47790.
+//
+// ArtHome añade (ver tele.js): la obra que muestra el Modo Arte y su imagen (/obra, /obra.jpg),
+// pasar a Modo Arte (/arte), pulsar una tecla del mando (/tecla), apartarse mientras se ve la
+// tele o un HDMI en el visor de Samsung (/tele) y el interruptor del vigilante (/vigilante).
 var http = require('http');
 var createArtMode = require('./artmode');
+var tele = require('./tele');
 var SELF = 'DclHome001.Home';
 var HIDDEN_GRACE = 250;         // non-Frame: Samsung Home appears almost at once
 var FRAME_HIDDEN_GRACE = 1500;  // Frame: give Art Mode time to report before reclaiming
@@ -32,7 +37,7 @@ var bootUntil = 0;
 var bootDone = false;
 var bootFallback = null;
 var state = {
-  watched: null, seen: false, leaving: false,
+  watched: null, seen: false, leaving: false, disabled: false,
   apps: [], running: {}, selfVisible: null, hiddenSince: 0,
   watchedHiddenSince: 0, watchAt: 0, lastLaunch: 0, last: null,
   epoch: 0, heartbeats: 0,
@@ -146,6 +151,7 @@ function standAside(result, knownApp) {
 function isFrame() { return state.guard.capability === 'frame'; }
 function hiddenGrace() { return isFrame() ? FRAME_HIDDEN_GRACE : HIDDEN_GRACE; }
 function launchNow(why) {
+  if (state.disabled) { return; }
   if (Date.now() - state.lastLaunch < 2000) { return; }
   state.lastLaunch = Date.now(); state.watched = null; state.seen = false;
   state.guard.lastBlocked = null; state.guard.launchCalls += 1;
@@ -159,7 +165,7 @@ function launchNow(why) {
 // watcher, so a Frame booting into Art Mode stays there. If the type never resolves, launch
 // anyway: a TV that boots to Samsung Home is worse than a rare Art interruption.
 function bootLaunch() {
-  if (bootDone || stopped || state.leaving) { return; }
+  if (bootDone || stopped || state.leaving || state.disabled) { return; }
   bootDone = true;
   clearTimeout(bootFallback);
   setTimeout(function () {
@@ -225,7 +231,7 @@ function recheck(candidate, cb) {
   });
 }
 function launchSelf(why) {
-  if (pending || state.leaving || stopped || !permitted()) { return; }
+  if (pending || state.leaving || state.disabled || stopped || !permitted()) { return; }
   if (!isFrame()) { launchNow(why); return; }
   if (Date.now() - state.lastLaunch < 2000) { return; }
   var candidate = { epoch: state.epoch, watched: state.watched, reason: why, timer: null };
@@ -367,8 +373,10 @@ module.exports.onStart = function () {
   if (started) { return; }
   started = true; bootUntil = Date.now() + BOOT_DELAY;
   bootFallback = setTimeout(bootLaunch, BOOT_FALLBACK);
+  state.disabled = tele.leerDatos().vigilante === false;
   server = http.createServer(function (req, res) {
     var url = require('url').parse(req.url, true), query = url.query;
+    if (arthome(url.pathname, query, res)) { return; }
     if (url.pathname === '/watch') {
       invalidate('app launch requested');
       state.watched = query.id || null; state.seen = false; state.leaving = false;
@@ -390,6 +398,48 @@ module.exports.onStart = function () {
   interval = setInterval(tick, 300);
   discoverCapability();
 };
+// ---- ArtHome ----------------------------------------------------------------------------
+function responder(res, codigo, tipo, cuerpo) {
+  res.writeHead(codigo, { 'Access-Control-Allow-Origin': '*', 'Content-Type': tipo, 'Cache-Control': 'no-store' });
+  res.end(cuerpo);
+}
+function json(res, objeto) { responder(res, 200, 'application/json', JSON.stringify(objeto)); }
+function arthome(ruta, query, res) {
+  if (ruta === '/obra') {
+    tele.obraActual(function (error, id) { json(res, error ? { error: error.message } : { id: id }); });
+  } else if (ruta === '/obra.jpg') {
+    var id = String(query.id || '');
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) { responder(res, 400, 'text/plain', 'id'); return true; }
+    tele.imagenObra(id, function (error, imagen) {
+      if (error) { responder(res, 502, 'text/plain', error.message); } else { responder(res, 200, 'image/jpeg', imagen); }
+    });
+  } else if (ruta === '/arte') {
+    invalidate('Modo Arte desde ArtHome');
+    tele.ponerModoArte(function (e, contestada) { json(res, { ok: true, contestada: contestada }); });
+  } else if (ruta === '/tecla') {
+    var nombre = String(query.k || '');
+    if (!/^KEY_[A-Z0-9_]{1,24}$/.test(nombre)) { responder(res, 400, 'text/plain', 'tecla'); return true; }
+    // En Modo Arte el aviso de permiso no se ve y la tele acaba negando el mando.
+    if (state.guard.artMode === 'on') { json(res, { error: 'Modo Arte encendido' }); return true; }
+    tele.tecla(nombre, function (error) { json(res, error ? { error: error.message } : { ok: true }); });
+  } else if (ruta === '/tele') {
+    // El visor de Samsung no dice si está en pantalla: el vigilante se aparta hasta que
+    // ArtHome vuelva a estar delante (/home).
+    invalidate('visor de tele'); state.leaving = true; resetTracking();
+    json(res, { ok: true });
+  } else if (ruta === '/vigilante') {
+    if (query.activo === '0' || query.activo === '1') {
+      state.disabled = query.activo === '0';
+      invalidate('vigilante ' + (state.disabled ? 'apagado' : 'encendido'));
+      tele.guardarDatos({ vigilante: !state.disabled });
+    }
+    json(res, { activo: !state.disabled, guardado: !!tele.carpetaDatos() });
+  } else {
+    return false;
+  }
+  return true;
+}
+
 module.exports.onRequest = function () {};
 module.exports.onExit = function () {
   stopped = true; invalidate('service exit'); scanNumber += 1;

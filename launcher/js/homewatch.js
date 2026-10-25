@@ -1,18 +1,22 @@
-// Talks to the background service (service/index.js) that reclaims the screen from
-// Samsung Home. Hidden web apps are frozen on retail TVs, so the watching happens there;
-// the launcher only reports what it opens and when it's back in front.
+// Habla con el servicio de fondo (service/index.js). Las apps web ocultas se congelan en la
+// tele, así que la vigilancia y las peticiones a la tele van allí; el launcher solo cuenta qué
+// abre y cuándo vuelve a estar delante. Basado en AeroTizen (MIT).
 (function (A) {
   'use strict';
 
   var cfg = A.config, tz = A.tizen;
   var leaving = false;
 
-  function tell(path) {
-    if (!tz) { return; }
+  function pedir(ruta, cb, espera) {
     var x = new XMLHttpRequest();
-    x.open('GET', cfg.SERVICE_URL + path);
-    x.timeout = 1500;
-    x.onerror = x.ontimeout = start;  // not running (first boot, crash): start it
+    x.open('GET', cfg.SERVICE_URL + ruta);
+    x.timeout = espera || 1500;
+    x.onload = function () {
+      var datos = null;
+      try { datos = JSON.parse(x.responseText); } catch (e) {}
+      if (cb) { cb(datos); }
+    };
+    x.onerror = x.ontimeout = function () { if (tz) { start(); } if (cb) { cb(null); } };
     x.send();
   }
 
@@ -21,23 +25,28 @@
     try {
       tz.application.launchAppControl(new tz.ApplicationControl('http://tizen.org/appcontrol/operation/service'),
         cfg.SERVICE_ID, null, null);
-    } catch (e) { /* service unavailable: Home simply goes to Samsung's screen */ }
+    } catch (e) { /* sin servicio, Home lleva al inicio de Samsung */ }
   }
 
   A.homewatch = {
     start: start,
-    // The launcher is about to open `appId`; Home inside it should come back here.
-    watch: function (appId) { tell('/watch?id=' + encodeURIComponent(A.catalog.preloadedStoreId(appId) || appId)); },
-    // Every real app, so the service can tell a cast/launch from elsewhere apart from Home.
-    reportApps: function (ids) { tell('/apps?ids=' + ids.map(encodeURIComponent).join(',')); },
-    // The tucked-away escape: hand the TV back to Samsung Home until the launcher is reopened.
+    // El launcher va a abrir `appId`; Home dentro de ella debe volver aquí.
+    watch: function (appId) { pedir('/watch?id=' + encodeURIComponent(A.catalog.preloadedStoreId(appId) || appId)); },
+    reportApps: function (ids) { pedir('/apps?ids=' + ids.map(encodeURIComponent).join(',')); },
+    // Salida al inicio de Samsung hasta que se vuelva a abrir ArtHome.
     useSamsungHome: function () {
       leaving = true;
-      tell('/leave');
-      try { tz.application.getCurrentApplication().exit(); } catch (e) { A.toast('Press Home to open Samsung Home'); }
+      pedir('/leave');
+      try { tz.application.getCurrentApplication().exit(); } catch (e) { A.toast('Pulsa Home para ir al inicio de Samsung'); }
     },
-    isLeaving: function () { return leaving; }
+    isLeaving: function () { return leaving; },
+    // ArtHome
+    tele: function () { pedir('/tele'); },
+    vigilante: function (activo, cb) { pedir('/vigilante?activo=' + (activo ? '1' : '0'), cb); },
+    arte: function (cb) { pedir('/arte', cb, 6000); },
+    tecla: function (nombre, cb) { pedir('/tecla?k=' + encodeURIComponent(nombre), cb, 35000); },
+    obra: function (cb) { pedir('/obra', cb, 7000); }
   };
 
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) { tell('/home'); } });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { pedir('/home'); } });
 })(window.AeroTizen);
