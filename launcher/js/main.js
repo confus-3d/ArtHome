@@ -57,6 +57,7 @@
   A.apps.load(function () {
     function seguir() {
       A.prefs.completar(A.apps.all);
+      A.prefs.guardar();  // también deja una copia de seguridad al arrancar
       A.entradas.cargar(function () { A.ir('inicio'); });
     }
     // Recién instalado: si el servicio guarda una copia de los ajustes, se recupera.
