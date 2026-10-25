@@ -19,7 +19,7 @@ var createArtMode = require('./artmode');
 var tele = require('./tele');
 var SELF = 'DclHome001.Home';
 var HIDDEN_GRACE = 250;         // non-Frame: Samsung Home appears almost at once
-var FRAME_HIDDEN_GRACE = 300;   // Frame: margen para que el Modo Arte avise (ArtHome: antes 1500)
+var FRAME_HIDDEN_GRACE = 150;   // Frame: margen para que el Modo Arte avise (ArtHome: antes 1500)
 var APP_GRACE = 2500;
 var WATCH_STOP_GRACE = 1500;    // a watched app must stay stopped this long before it's dropped
 var WATCH_COVER_GRACE = 10000;  // an app the launcher opened may take this long to cover it
@@ -228,13 +228,9 @@ function recheck(candidate, cb) {
         if (!watched || watched.visible || !state.seen) {
           cancel(candidate, 'watched app visible or status unavailable'); return;
         }
-        // Also check other apps: a cast can start while a watched app closes.
-        snapshot(function (result) {
-          if (!current(candidate)) { return; }
-          if (!result.complete) { cancel(candidate, 'app inventory unavailable'); return; }
-          if (standAside(result, candidate.watched)) { return; }
-          ready();
-        });
+        // ArtHome: sin repasar todas las apps aquí (AeroTizen lo hacía por si se envía algo desde
+        // el móvil justo entonces); así la vuelta es casi inmediata.
+        ready();
       });
     } else {
       snapshot(function (result) {
@@ -420,7 +416,7 @@ module.exports.onStart = function () {
     res.end(JSON.stringify(response));
   });
   server.listen(47790, '127.0.0.1');
-  interval = setInterval(tick, 300);
+  interval = setInterval(tick, 150);  // ArtHome: antes 300 ms
   discoverCapability();
 };
 // ---- ArtHome ----------------------------------------------------------------------------
