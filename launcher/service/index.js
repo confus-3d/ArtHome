@@ -294,10 +294,16 @@ function tick() {
     if (!valid() || !me) { done(); return; }
     var now = Date.now();
     if (me.visible) {
+      if (state.selfVisible !== true) { state.selfVisibleSince = now; }
       state.selfVisible = true; state.hiddenSince = 0;
       // The launcher stays on screen for a moment after opening an app; keep that watch until the
       // app has had time to cover it. A real return to the launcher resets it through /home.
       if (now - state.watchAt >= WATCH_COVER_GRACE) { state.watched = null; state.seen = false; resetWatchedTiming(); }
+      // ArtHome: si el launcher lleva un rato delante, la app anterior ya no cuenta, aunque siga en
+      // marcha detrás (Disney+ lo hace). Sin esto, un botón como el de TV Plus no lo devolvía.
+      if (state.watched && state.selfVisibleSince && now - state.selfVisibleSince >= 2500 && now - state.watchAt >= 2500) {
+        record('olvidada', state.watched); state.watched = null; state.seen = false; resetWatchedTiming();
+      }
       if (now - (state.snapAt || 0) > 5000) {
         state.snapAt = now;
         snapshot(function (result) { if (valid() && (result.complete || !isFrame())) { state.running = result.running; } done(); });
@@ -387,6 +393,7 @@ module.exports.onStart = function () {
   server = http.createServer(function (req, res) {
     var url = require('url').parse(req.url, true), query = url.query;
     if (arthome(url.pathname, query, res)) { return; }
+    if (url.pathname === '/watch' || url.pathname === '/home') { record(url.pathname.slice(1), query.id || ''); }
     if (url.pathname === '/watch') {
       invalidate('app launch requested');
       state.watched = query.id || null; state.seen = false; state.leaving = false;
