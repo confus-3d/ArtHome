@@ -1,200 +1,172 @@
-# AeroTizen
+# ArtHome
 
-[![CI](https://github.com/helalaou/AeroTizen/actions/workflows/ci.yml/badge.svg)](https://github.com/helalaou/AeroTizen/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Contributors](https://img.shields.io/github/contributors/helalaou/AeroTizen)](https://github.com/helalaou/AeroTizen/graphs/contributors)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+A home screen for the Samsung The Frame that uses the artwork on display in Art Mode as its
+background. It's built on [AeroTizen](https://github.com/helalaou/AeroTizen) 2.3.0 by
+**Hamza El Alaoui** (MIT licence). ArtHome keeps AeroTizen's base: the launcher app, the
+background service that opens it at power-on and when you press Home, the Art Mode guard, and
+the command-line tool that installs it from a computer. The interface on top is new.
 
-A simple home screen for Samsung TVs, and a command-line tool to clean the TV up from your computer.
+![ArtHome on a Samsung The Frame 2022](docs/screenshots/arthome-home.png)
 
-Built with help from these contributors. [Join them](CONTRIBUTING.md): testing on your TV counts too.
+It was made for one TV: a **The Frame 65" from 2022** (TQ65LS03BGUXXC, Tizen 6.5, firmware
+1720.7) in Spain. The interface is in **Spanish**. Code comments and commit messages are in
+Spanish too; the documentation is in English.
 
-<a href="https://github.com/helalaou/AeroTizen/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=helalaou/AeroTizen" alt="AeroTizen contributors">
-</a>
+## What it does
 
-![AeroTizen home screen on a Samsung TV](docs/screenshots/app-cards-samsung-tv.png)
+**Home screen ("Galería")**
 
-## Motivation
+- The background is the artwork the Art Mode is showing, blurred. Next to it there's a gallery
+  label with title, author and year. The TV only knows its own ID (`MY_F0039`), so the label
+  comes from a built-in list. That list can be edited without reinstalling.
+- Time, date, weather (Open-Meteo, no account needed) and network type sit in the top left.
+- A row of your apps in your own order. You can set names and colours for each app.
+- A bottom bar with the inputs (TV, HDMI with their own names; HDMI ports with nothing
+  connected are hidden), **All apps**, **Art Mode** (one press and the TV goes to Art Mode),
+  **Samsung Home** (Samsung's own home screen, if you ever need it) and **Settings**.
+- It shows instantly on return: the last app list and background are cached, then refreshed.
 
-The default home screen on recent Samsung TVs is mostly ads. The "Top Picks for You" row can't be
-removed, Samsung TV Plus starts playing on its own at boot, and the TV tracks what you watch unless
-you find the privacy settings to turn it off.
+**All apps ("Catálogo")**
 
-On Android TV you would install a different launcher and remove the junk over ADB. Tizen allows
-neither: there's no way to replace the home screen, no shell, and the official developer tools are
-a large SDK that doesn't run natively on Apple Silicon.
+- Apps grouped like a museum catalogue: Cinema & series, TV, Music & video, Other.
+- A side card for the focused app, with its artwork from the TV.
+- **OK opens a menu:** open, add to or remove from Home, change its position on Home, rename,
+  change its colour, go back to the original name, hide or unhide.
+- Hidden by default: Rakuten TV, Xbox, GeForce NOW, Amazon Luna and e-Manual.
 
-AeroTizen works around that. The launcher is a normal TV app that acts as the home screen: it opens
-when the TV turns on and comes back when you press Home. The CLI handles the setup (certificates,
-signing, installing) and shows which preinstalled apps can be removed. Tizen Studio and root
-access aren't needed.
+**Settings**
 
-## Features
+- Home (which apps, the Art Mode and Samsung Home buttons), background (blur strength, label
+  on/off), colours, the watcher switch, TV and inputs, time and weather, and an About page
+  with the AeroTizen credit.
+- **TV settings** sends the remote's Menu key, so Samsung's full settings open on top of
+  ArtHome.
+- **One switch for everything automatic:** "open ArtHome at power-on and with Home". When
+  it's off, the service stops watching and ArtHome becomes an ordinary app. Any watcher added
+  in the future has to obey this same switch.
+- **Backup:** settings are saved to the TV's service after every change and at start-up.
+  After a reinstall they come back by themselves. "Send the backup to the computer" and
+  "Restore" are in About.
 
-On the TV:
+**Rules it follows**
 
-- Your apps as square cards using each app's own artwork from the TV. Pick **Big** (3 across) or
-  **Small** (5 across). Apps without artwork show their icon and name
-- **Home** and **All apps** tabs: keep favourites on Home and open any installed app from All apps
-- Opens at power-on and comes back when you press Home (see [Limits](#limits))
-- Hold OK on a tile to move it around
-- Opens HbbTV apps such as BBC iPlayer
-- Inputs list every HDMI port and the name of what's plugged in. You can rename them, and hide
-  disconnected ports or the Live TV tile
-- 31 backgrounds, 16 of them animated, with a speed slider and preview (for example [Snowfall](docs/screenshots/theme-snowfall.png) and [Lava](docs/screenshots/theme-lava.png))
-- Time, date and weather in the top bar. Date and time follow the TV's language and 12/24-hour
-  setting, and °C or °F is picked from your region. You can change their formats or visibility
-  in Settings
-- Weather for a town you search for, or an approximate location from your internet address. The
-  place name can be hidden
-- Shows whether the TV is on Ethernet or Wi-Fi. Show or hide it in **Settings → Network indicator**
-- An optional Fireplace tile that plays a fireplace video
-- Works on The Frame: AeroTizen leaves Art Mode alone
-- Settings to choose which apps show up, open the Samsung app store, or go back to Samsung's home screen
+- The Frame remote has no colour buttons, so everything works with the arrows, OK, Back and
+  Home.
+- Back never closes ArtHome.
+- It never sends remote keys while the TV is in Art Mode (the permission prompt would be
+  invisible and the TV would mark the connection as refused).
+- Live TV and HDMI switch the source and open Samsung's own viewer (`org.tizen.tv-viewer`).
+  Drawing the TV inside the launcher froze on this model.
+- Chromium 85 on this TV is slow, so effects are drawn once. The blur is done on a
+  384×216 canvas and the browser stretches it; nothing is filtered live.
 
-From your computer (`aerotizen`):
+Removed from AeroTizen: its animated backgrounds, fireplace tile, Preact settings, card
+layouts and the colour-button shortcuts.
 
-- Finds the TV on your network
-- Connects to the TV's developer port directly in Python, on macOS, Linux or Windows
-- Creates the Samsung signing certificates for your TV (you sign in to your Samsung account once)
-- Signs and installs any `.wgt` app, including the launcher
-- Opens apps and checks that they actually came up on screen (`aerotizen launch`)
-- Restarts apps with Chrome DevTools for debugging (`aerotizen inspect launcher`)
-- Lists installed apps, flags the bloat, and removes it if your firmware allows
+## Where we left off (2026-10-25)
 
-There's also a short [guide to the settings worth turning off](docs/settings.md) (ads, viewing
-data, autorun) and [DNS blocklists](dns/) if you run Pi-hole, AdGuard Home or NextDNS.
+**Working and in daily use** on the TV above: ArtHome 1.1 (package 3.1.0).
 
-| Settings | Moving a tile |
+| Area | State |
 |---|---|
-| ![Settings](docs/screenshots/settings.png) | ![Moving a tile](docs/screenshots/move.png) |
+| Home screen, All apps, Settings | ✓ done |
+| Opens at power-on | ✓ ("Start with Smart Hub" is off on the TV, and ArtHome is first in Samsung's app row) |
+| Home returns to ArtHome | ✓ from Netflix, YouTube and Spotify. ⚠ Disney+ and Prime Video stay "visible" in Samsung's 2022 preview window, so Home doesn't come back from them |
+| Shortcut button | ✓ the **Samsung TV Plus** button on the remote brings ArtHome back from any app. TV Plus flashes on screen for a moment, and that can't be avoided |
+| Art Mode | ✓ button, background and label. The Frame guard is AeroTizen's original (two fresh checks, 1.5 s grace) and stays as it is: a faster version reopened ArtHome over Art Mode |
+| Artwork list without reinstalling | ✓ pushed from the computer over developer mode |
+| Settings backup | ✓ to the computer and back |
 
-The device names and weather in these screenshots are placeholders.
+**Still open**
 
-## Tested on
+- Confirm whether Disney+ → Home now comes back (the watcher did see the change once the
+  store numbers were in).
+- Prime Video sends a `touchDisable` notice on the remote channel when you press Home; the
+  service could listen for it.
+- Repeat the Home test for Movistar Plus+, Crunchyroll and Atresplayer with their store
+  numbers.
+- `launcher/js/tienda.js` (app ID → store number) is generated from **this** TV's app list.
+  On another TV it must be regenerated. Making that automatic is the main step to make
+  ArtHome work on other TVs.
+- A button for TizenTube (YouTube without ads through TizenBrew).
+- Edit artwork titles and authors from ArtHome itself.
+- An English interface.
+- The computer-side helper scripts (artwork list upload, backup receiver, test probes) are
+  not in this repository yet.
+- Not ArtHome, but same project: block Samsung's ads and viewing tracking in the router, for
+  the TV only. The domain rounds are in [findings](docs/arthome/findings.md#ads-and-tracking).
+- AeroTizen's tests in `tests/` still target its own launcher and haven't been updated for
+  ArtHome.
 
-| TV | Year | Firmware |
-|---|---|---|
-| Samsung 65" Crystal UHD DU7200 (UN65DU7200FXZA) | 2024 | Tizen 9.0 |
-| Samsung 65" The Frame LS03D (QE65LS03DAUXXU) | 2024 | Tizen 9.0 |
-| Samsung 65" OLED S90C (QE65S90CATXZT) | 2023 | Tizen 7.0 |
-| Samsung 75" QLED Q60B (QE75Q60BAUXXC) | 2022 | Tizen 6.5 |
+**Decided against:** root, changing which app the Home button opens (it needs undocumented
+internal settings), replacing Samsung TV Plus with our own app (the TV only accepts the
+version Samsung signs), and an observer that logs everything the TV does.
 
-Other Samsung TVs from 2020 on should work, but these are the only models tested so far. If you try it
-on yours, please [open a model report](../../issues/new?template=model_report.yml).
+## Documentation
 
-## Setup
+- [How to connect the TV to the computer](docs/arthome/connect.md): developer mode, the Host
+  PC IP, certificates, installing, pushing data and debugging.
+- [Findings](docs/arthome/findings.md): what this TV allows and what it doesn't, learned while
+  building ArtHome.
+- [App list](docs/arthome/apps.md): the apps on the TV, their IDs and store numbers, and
+  which ones come back with Home.
+- [Artwork list](docs/arthome/artworks.md): the 42 works in "My Photos" and their labels.
+- [Original AeroTizen README](docs/aerotizen-readme.md): the CLI (`aerotizen`) and its setup
+  are unchanged.
 
-You need a computer on the same network as the TV.
+## Install
 
-1. Download the latest **CLI** release (`cli-v...`) from
-   [Releases](https://github.com/helalaou/AeroTizen/releases). Extract the archive for your
-   computer: Linux x64, Windows x64, or macOS Apple silicon / Intel. It contains
-   `aerotizen`, including Python and its dependencies.
+You need a computer on the same network as the TV, and Python 3.10 or newer.
 
-   Open a terminal in the extracted directory and check that it finds your TV.
-   On macOS or Linux:
+```bash
+python3 -m venv .venv-aerotizen
+.venv-aerotizen/bin/pip install .
+.venv-aerotizen/bin/aerotizen certs
+.venv-aerotizen/bin/aerotizen --tv <TV IP> install ./launcher
+```
 
-   ```bash
-   ./aerotizen discover
-   ```
+Before that, turn on developer mode with the Host PC IP set to your computer; the full steps are
+in [connect.md](docs/arthome/connect.md). ArtHome installs as `DclHome001.Home`, the same app
+ID as AeroTizen, so it replaces AeroTizen and keeps its settings if it's signed with the same
+certificate.
 
-   In Windows PowerShell:
+To remove it: Settings → "open ArtHome at power-on and with Home" off, then uninstall it from
+Apps → Settings on the TV.
 
-   ```powershell
-   .\aerotizen.exe discover
-   ```
+## Repository layout
 
-   Run the remaining commands from this directory. The examples below use
-   `./aerotizen`; in Windows PowerShell, use `.\aerotizen.exe` instead.
+| Path | What |
+|---|---|
+| `launcher/` | ArtHome: `index.html`, `js/`, `css/`, `fonts/` (Newsreader and Manrope, OFL) and `service/` (the background service) |
+| `launcher/js/obras.js` | Built-in artwork labels |
+| `launcher/js/tienda.js` | App ID → store number for this TV |
+| `src/aerotizen/` | AeroTizen's CLI, unchanged |
+| `tools/servicio-pruebas.js` | Runs the service on the computer, read-only against the TV, to preview ArtHome in a browser |
+| `dns/` | AeroTizen's DNS blocklists |
+| `docs/arthome/` | This project's documentation |
 
-2. Turn on Developer Mode on the TV. Open **Apps**, type `12345` on the remote (or with the
-   on-screen number pad), switch Developer mode on, and set Host PC IP to your computer's IP.
-   Then unplug the TV for a minute. Turning it off with the remote isn't enough for the change to
-   apply. `./aerotizen status` should now show `developerMode=1`.
-
-3. Create the certificates. This opens Samsung's sign-in page in your browser:
-
-   ```bash
-   ./aerotizen certs
-   ```
-
-4. Install the launcher:
-
-   ```bash
-   ./aerotizen install launcher
-   ```
-
-   This downloads the latest stable **launcher** release, checks its checksum and
-   compatibility, signs it with your TV certificates, and installs it. No source checkout
-   or Node.js is needed. Keep your existing certificates for future app updates.
-
-   Run the same command to install a newer launcher. To select a version, use
-   `./aerotizen install launcher --version 2.2.0` (replace the number with a published
-   launcher version). CLI and launcher versions are independent; a launcher release
-   can require a newer CLI. Use `./aerotizen --version` to check your CLI version.
-
-   To install local development files or a downloaded package, use an explicit path:
-   `./aerotizen install ./dist/launcher` (after `npm ci && npm run build`) or
-   `./aerotizen install ./app.wgt`.
-
-Optional: add the extracted directory to your `PATH` to run `aerotizen` from any
-directory. You can then omit `./` (macOS/Linux) or `.\` (Windows) from the commands.
-
-If you already use Python 3.10 or newer, you can instead install the CLI with
-`pip install git+https://github.com/helalaou/AeroTizen` and run it as `aerotizen`.
-
-That's it. The TV will start on AeroTizen from now on, and the gear icon opens settings.
-
-In **Settings → Weather**, choose **Show weather** or **Hide weather**. Hiding weather
-stops automatic location and forecast requests, while keeping your saved location and
-units. In **Date & time**, choose **No time** or **No date** to hide either item; selecting
-a format shows it again. **Network indicator** has its own **Show** and **Hide** controls.
-All three header items are shown by default. Choices apply at once and stay saved after
-a restart.
-
-For accurate weather, open **Settings → Weather** and search for your town or postcode.
-
-To look at or remove installed apps, run `./aerotizen apps` and `./aerotizen debloat`.
-
-## Limits
-
-Samsung doesn't support any of this officially, so some parts are workarounds:
-
-- Pressing Home brings AeroTizen back after a second or two. That works from Samsung's home
-  screen and inside Netflix, but not inside YouTube, Prime Video, Stremio, Spotify or HbbTV apps. Those apps
-  don't report whether they're on screen, so there's no way to tell. Back still works everywhere.
-  After Home in one of them, AeroTizen comes back once that app closes or you open an app that does
-  report itself, such as Netflix. You can also open AeroTizen from Samsung's app row.
-- On The Frame, AeroTizen checks Art Mode before every return and stays out of the way while it's
-  on. If the TV doesn't report its power or Art Mode state, AeroTizen waits rather than guess.
-  Tested on a 2024 Frame (QE65LS03DAUXXU, Tizen 9.0); starting from a cold boot isn't verified yet.
-- On Tizen 6 and newer, store and preinstalled apps can't be removed over the developer
-  connection. You can delete them on the TV under Apps → Settings. Samsung's system apps (TV Plus,
-  Gaming Hub) can only be disabled.
-- TV apps are drawn at 1920×1080 and upscaled, even on a 4K panel. Only video plays at full 4K.
-- Samsung's own menus and screens can't be changed. The [settings guide](docs/settings.md) and
-  [DNS lists](dns/) cover what you can switch off.
-
-## Contributing
-
-The goal is a home screen that works well on every Samsung TV and gets as far as possible from the
-ads and clutter Tizen ships with. Help is welcome, especially testing on other models: a model
-report saying what works and what doesn't is the most useful contribution. Pull requests for
-fixes, new themes or features are welcome too. See [CONTRIBUTING.md](CONTRIBUTING.md).
+To preview on the computer: serve `launcher/` (for example `npx serve -l 4800 launcher`) and,
+in another terminal, `ARTHOME_TELE=<TV IP> node tools/servicio-pruebas.js`.
 
 ## Credits
 
-- [LTvLauncher](https://github.com/leanbitlab-org/LtvLauncher), which the layout is based on
-- [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) and [tizen-sdb](https://github.com/PatrickSt1991/tizen-sdb), for how the developer connection, certificates and signing work
-- [samsung-tizen-tv-debloat](https://github.com/ardazeytin/samsung-tizen-tv-debloat), for which packages are safe to remove
-- App artwork is read from Samsung's cache on each TV; none is bundled or downloaded. Fallback logos
-  are from [Simple Icons](https://simpleicons.org). Artwork and trademarks belong to their owners
-- Weather and location search from [Open-Meteo](https://open-meteo.com), automatic location from [ipapi](https://ipapi.co)
+- **[AeroTizen](https://github.com/helalaou/AeroTizen) by Hamza El Alaoui**: the base of
+  ArtHome (launcher, service, Art Mode guard, CLI), MIT licence. The copyright notice is kept
+  in [LICENSE](LICENSE).
+- AeroTizen's own credits: [LTvLauncher](https://github.com/leanbitlab-org/LtvLauncher),
+  [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung),
+  [tizen-sdb](https://github.com/PatrickSt1991/tizen-sdb),
+  [samsung-tizen-tv-debloat](https://github.com/ardazeytin/samsung-tizen-tv-debloat) and
+  [Simple Icons](https://simpleicons.org).
+- [arn0-tv](https://github.com/NelsonEU/arn0-tv): its measurements of what Chromium 85 on
+  Tizen 6.5 can handle shaped the design rules. No code taken.
+- Weather from [Open-Meteo](https://open-meteo.com).
+- Fonts: [Newsreader](https://fonts.google.com/specimen/Newsreader) and
+  [Manrope](https://fonts.google.com/specimen/Manrope), SIL Open Font Licence.
+- App artwork is read from the TV's own cache. Artwork and trademarks belong to their owners.
 
 This project isn't affiliated with Samsung. Use it at your own risk.
 
-## License
+## Licence
 
-[MIT](LICENSE)
+[MIT](LICENSE), like AeroTizen.
