@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.4.0](https://github.com/confus-3d/ArtHome/compare/cli-v2.3.0...cli-v2.4.0) (2026-10-25)
+
+
+### Features
+
+* **launcher:** migrate Settings to Preact and TypeScript ([#36](https://github.com/confus-3d/ArtHome/issues/36)) ([27c0919](https://github.com/confus-3d/ArtHome/commit/27c09193035955a1e39c5da71619743655ae22f4))
+* release CLI and launcher independently ([#23](https://github.com/confus-3d/ArtHome/issues/23)) ([c73293b](https://github.com/confus-3d/ArtHome/commit/c73293b3ceb8a8721fa85e95adaba8136fab22ec))
+
+
+### Documentation
+
+* root no descartado; revisión de Vetro en observación ([4811225](https://github.com/confus-3d/ArtHome/commit/48112255b4813568417b3e1c56e16ca9bade38eb))
+
 ## [2.3.0](https://github.com/helalaou/AeroTizen/compare/cli-v2.2.0...cli-v2.3.0) (2026-10-25)
 
 
