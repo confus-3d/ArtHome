@@ -159,6 +159,32 @@ From the r/Tizen thread about Flix Home and the projects it links (October 2026)
 | [CleanFrame](https://github.com/nthnclrk/CleanFrame) | MIT | Made for The Frame 2024 (Tizen 9) |
 | TVDeck | MIT | TizenBrew module; opens from TizenBrew only |
 | Flix Home, Scenic Home | none | Ideas only; no code can be reused |
-| Root-based projects | | Not considered |
+| [Vetro](https://github.com/andrearicci93/vetro) | MIT | Needs root. Launcher on the Home key, remaps any remote button, switches off ads and tracking, filters domains on the TV. Watching; see below |
 
 None offered an Art Mode button, which is why ArtHome exists.
+
+### Vetro, reviewed 2026-10-25 (code read, not installed)
+
+Vetro would solve what ArtHome can't: a remote button that opens ArtHome without the TV Plus
+flash, and a domain filter on the TV that the ISP's DNS interception can't bypass. It has
+reports on two 2022 models with firmware 1720.7 (Q67B, S95B). We're waiting for these before
+trying it on this Frame:
+
+- **Dashboard security.** At commit `827b728`, the dashboard listens on the whole network
+  (port 8099) with no password and no origin check, and `/exec` runs the body of the request
+  as root. Any device on the network could run commands on the TV, and so could any web
+  page opened on one of them. Its own issues #5 and #9 ask for authentication.
+- **The Frame.** Its component list comes from a Q80A, which has no Art Mode. It lists
+  `org.tizen.art-app` and the `coba.ambient*` components as optional, and its "Stop Ambient"
+  quick setting stops `org.tizen.ambientapp` at every boot. On a Frame, those may be what
+  Art Mode runs on. There's no Frame report yet.
+- **Firmware updates.** It suggests switching them off so root isn't lost, which keeps the
+  security hole open on purpose.
+- **Binaries.** It ships five prebuilt `.dll` files. Three have their source next to them;
+  we haven't checked that the source reproduces them.
+- **TizenTube.** They clash on a port (issue #16); building with another port fixes it.
+
+Good signs: no external addresses in the code (nothing is sent out), every switch can be
+reversed except uninstalling, and serious tests and documentation. If the points above are
+covered, the minimal use here would be the remapper and the domain filter, leaving Art Mode,
+ambient and firmware settings alone.

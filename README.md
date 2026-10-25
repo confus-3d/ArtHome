@@ -98,9 +98,14 @@ layouts and the colour-button shortcuts.
 - AeroTizen's tests in `tests/` still target its own launcher and haven't been updated for
   ArtHome.
 
-**Decided against:** root, changing which app the Home button opens (it needs undocumented
-internal settings), replacing Samsung TV Plus with our own app (the TV only accepts the
-version Samsung signs), and an observer that logs everything the TV does.
+**Decided against:** changing which app the Home button opens through undocumented internal
+settings, replacing Samsung TV Plus with our own app (the TV only accepts the version Samsung
+signs), and an observer that logs everything the TV does.
+
+**Watching:** root-based tools. They aren't ruled out if they cover these needs safely.
+[Vetro](https://github.com/andrearicci93/vetro) could map a remote button to ArtHome and
+filter ad domains on the TV itself; see [findings](docs/arthome/findings.md#other-launchers)
+for what has to happen before trying it on a Frame.
 
 ## Documentation
 
