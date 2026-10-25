@@ -67,6 +67,9 @@
       ] },
       { titulo: 'Acerca de', intro: 'ArtHome se basa en AeroTizen (licencia MIT), de Hamza El Alaoui.', opciones: [
         { tipo: 'info', texto: 'Versión', valor: A.config.VERSION + ' · base AeroTizen 2.3.0' },
+        { tipo: 'accion', texto: 'Enviar la copia al Mac', det: 'Antes, en el Mac: arthome_datos.py bajar-copia', valor: 'Enviar ›', hacer: function () {
+          A.prefs.enviarAlMac(function (ok, motivo) { A.toast(ok ? 'Copia enviada al Mac' : motivo); });
+        } },
         { tipo: 'accion', texto: 'Restaurar la copia de seguridad', det: 'Tus ajustes se copian solos en cada cambio; el Mac puede bajar la copia y volver a subirla',
           valor: 'Restaurar ›', hacer: function () {
             A.homewatch.leerCopia(true, function (copia) {

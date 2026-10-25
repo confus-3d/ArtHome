@@ -27,6 +27,30 @@
     p.temporizadorCopia = setTimeout(function () { if (A.homewatch) { A.homewatch.guardarCopia(out); } }, 2000);
   };
 
+  // Enviar la copia al Mac: la tele no deja bajar archivos por el modo desarrollador, así que
+  // el Mac escucha un momento (arthome_datos.py bajar-copia) en la IP que tiene puesta el modo
+  // desarrollador y ArtHome se la manda.
+  p.enviarAlMac = function (cb) {
+    var info = new XMLHttpRequest();
+    info.open('GET', 'http://127.0.0.1:8001/api/v2/');
+    info.timeout = 3000;
+    info.onload = function () {
+      var ip = '';
+      try { ip = JSON.parse(info.responseText).device.developerIP || ''; } catch (e) {}
+      if (!/^\d+\.\d+\.\d+\.\d+$/.test(ip) || ip === '127.0.0.1') { cb(false, 'El modo desarrollador no apunta al Mac'); return; }
+      var out = {};
+      Object.keys(cfg.DEFAULTS).forEach(function (k) { out[k] = p[k]; });
+      var envio = new XMLHttpRequest();
+      envio.open('POST', 'http://' + ip + ':47791/copia');
+      envio.timeout = 5000;
+      envio.onload = function () { cb(envio.status === 200, 'El Mac no aceptó la copia'); };
+      envio.onerror = envio.ontimeout = function () { cb(false, 'El Mac no está esperando la copia'); };
+      envio.send(JSON.stringify({ guardada: Date.now(), ajustes: out }));
+    };
+    info.onerror = info.ontimeout = function () { cb(false, 'No se pudo leer la IP del Mac'); };
+    info.send();
+  };
+
   // Recuperar una copia (de la tele o subida desde el Mac).
   p.aplicarCopia = function (copia) {
     var ajustes = copia && copia.ajustes;
