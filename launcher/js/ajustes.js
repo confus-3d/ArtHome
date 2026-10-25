@@ -22,6 +22,7 @@
         { tipo: 'accion', texto: 'Apps escondidas', det: 'No salen en «Todas las apps»: ' + nombresOcultas(), valor: (p.ocultas || []).length + ' ›',
           hacer: function () { A.ir('catalogo', { verOcultas: true }); } },
         { tipo: 'interruptor', texto: 'Botón de Modo Arte en el inicio', clave: 'botonArte' },
+        { tipo: 'interruptor', texto: 'Botón de Inicio de Samsung en el inicio', det: 'Abre el inicio de Samsung; ArtHome no vuelve solo hasta que lo abras otra vez', clave: 'botonSamsung' },
         { tipo: 'interruptor', texto: 'Mostrar Tele y HDMI en el inicio', clave: 'mostrarEntradas' }
       ] },
       { titulo: 'Fondo y obra', intro: 'El fondo es la obra que esté mostrando el Modo Arte, difuminada.', opciones: [

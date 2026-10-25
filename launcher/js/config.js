@@ -56,6 +56,7 @@ AeroTizen.config = {
     colores: {},           // id -> color propio (si no, el de la marca)
     acento: '#d9b77c',     // color de los detalles
     botonArte: true,
+    botonSamsung: true,    // «Inicio de Samsung» en la barra de abajo
     mostrarEntradas: true,
     ocultarHdmiSinConectar: true,
     nombresEntradas: {},   // 'HDMI 1' -> nombre propio

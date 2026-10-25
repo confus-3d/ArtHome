@@ -32,6 +32,7 @@
     boton('Todas las apps', function () { A.ir('catalogo'); });
     var empuje = true;
     if (A.prefs.botonArte) { boton('Modo Arte', A.arte.poner, 'empuje'); empuje = false; }
+    if (A.prefs.botonSamsung) { boton('Inicio de Samsung', A.homewatch.useSamsungHome, empuje ? 'empuje' : ''); empuje = false; }
     boton('Ajustes', function () { A.ir('ajustes'); }, empuje ? 'empuje' : '');
     if (!elementos[0].length) { fila = 1; }
     pintar();
