@@ -12,7 +12,8 @@
 //
 // ArtHome añade (ver tele.js): la obra que muestra el Modo Arte y su imagen (/obra, /obra.jpg),
 // pasar a Modo Arte (/arte), pulsar una tecla del mando (/tecla), apartarse mientras se ve la
-// tele o un HDMI en el visor de Samsung (/tele) y el interruptor del vigilante (/vigilante).
+// tele o un HDMI en el visor de Samsung (/tele), el interruptor del vigilante (/vigilante), el
+// listado de obras subido desde el Mac (/obras) y la copia de los ajustes (/copia).
 var http = require('http');
 var createArtMode = require('./artmode');
 var tele = require('./tele');
@@ -173,10 +174,19 @@ function bootLaunch() {
     else if (!isFrame()) { launchSelf('boot'); }
   }, Math.max(0, bootUntil - Date.now()));
 }
+// ArtHome: el estado del Modo Arte ya no se consulta cada 3 s (ahora cada minuto). Si el
+// servicio quiere abrir ArtHome y recuerda «encendido», pregunta en ese momento (como mucho
+// cada 3 s) para no esperar al minuto siguiente.
+var ultimaPregunta = 0;
+function preguntarArte() {
+  if (Date.now() - ultimaPregunta < 3000) { return; }
+  ultimaPregunta = Date.now();
+  art.fresh(function () {});
+}
 function permitted() {
   if (state.guard.capability === 'non-frame' || state.guard.capability === 'not-advertised') { return true; }
   if (state.guard.capability !== 'frame') { block('TV capability unknown'); return false; }
-  if (state.guard.artMode !== 'off') { block('Art status: ' + state.guard.artMode); return false; }
+  if (state.guard.artMode !== 'off') { preguntarArte(); block('Art status: ' + state.guard.artMode); return false; }
   return true;
 }
 function freshOff(cb) {
@@ -427,6 +437,11 @@ function arthome(ruta, query, res) {
     // ArtHome vuelva a estar delante (/home).
     invalidate('visor de tele'); state.leaving = true; resetTracking();
     json(res, { ok: true });
+  } else if (ruta === '/obras') {
+    json(res, tele.obras() || {});
+  } else if (ruta === '/copia') {
+    if (typeof query.datos === 'string') { json(res, { guardada: tele.guardarCopia(query.datos) }); }
+    else { json(res, tele.copia(query.restaurar === '1') || {}); }
   } else if (ruta === '/vigilante') {
     if (query.activo === '0' || query.activo === '1') {
       state.disabled = query.activo === '0';

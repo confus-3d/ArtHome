@@ -160,7 +160,7 @@ module.exports = function createArtMode(options) {
       if (waiting.length) { pumpFresh(); }
       else { requestArt(conn); }
       scheduleQuery(conn);
-    }, 3000);
+    }, 60000);  // ArtHome: una vez por minuto; la tele avisa sola de los cambios y antes de abrir se pregunta en el momento
   }
   function message(conn, payload) {
     var msg;

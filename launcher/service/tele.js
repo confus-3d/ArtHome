@@ -47,6 +47,40 @@ function guardarDatos(cambios) {
   catch (e) { return false; }
 }
 
+// ---- obras y copia de ajustes, sin reinstalar ---------------------------------------------
+// El Mac deja archivos en la carpeta temporal del modo desarrollador (la misma que usa para
+// instalar) y el servicio los recoge en su carpeta de datos. La copia de los ajustes se deja
+// también ahí para que el Mac pueda bajarla.
+var COMPARTIDA = '/home/owner/share/tmp/sdk_tools';
+function leerJSON(ruta) {
+  try { return JSON.parse(fs.readFileSync(ruta, 'utf8')); } catch (e) { return null; }
+}
+function obras() {
+  var dir = carpetaDatos(), propia = dir && path.join(dir, 'obras.json');
+  var subida = path.join(COMPARTIDA, 'arthome-obras.json'), nueva = leerJSON(subida);
+  if (nueva && nueva.obras && propia) {
+    try { fs.writeFileSync(propia, JSON.stringify(nueva)); fs.unlinkSync(subida); } catch (e) { /* se queda la subida */ }
+  }
+  return (nueva && nueva.obras ? nueva : null) || (propia && leerJSON(propia)) || null;
+}
+function guardarCopia(texto) {
+  var datos;
+  try { datos = JSON.parse(texto); } catch (e) { return false; }
+  if (!datos || typeof datos !== 'object' || Array.isArray(datos)) { return false; }
+  var ok = false, cuerpo = JSON.stringify({ guardada: Date.now(), ajustes: datos });
+  try { fs.writeFileSync(path.join(carpetaDatos(), 'ajustes.json'), cuerpo); ok = true; } catch (e) {}
+  try { fs.writeFileSync(path.join(COMPARTIDA, 'arthome-copia.json'), cuerpo); ok = true; } catch (e) {}
+  return ok;
+}
+function copia(restaurar) {
+  if (restaurar) {
+    var subida = path.join(COMPARTIDA, 'arthome-restaurar.json'), r = leerJSON(subida);
+    if (r) { try { fs.unlinkSync(subida); } catch (e) {} return r.ajustes ? r : { ajustes: r }; }
+  }
+  var dir = carpetaDatos();
+  return (dir && leerJSON(path.join(dir, 'ajustes.json'))) || leerJSON(path.join(COMPARTIDA, 'arthome-copia.json'));
+}
+
 // ---- canal WebSocket mínimo ---------------------------------------------------------
 function canal(seguro, ruta, alMensaje, alCerrar) {
   var clave = crypto.randomBytes(16).toString('base64');
@@ -156,10 +190,13 @@ function descargar(info, cb) {
 }
 
 var cache = { id: null, imagen: null };
-function obraActual(cb) {
-  peticionArte({ request: 'get_current_artwork' }, 5000, function (error, datos) {
-    if (error || !datos || !datos.content_id) { cb(error || new Error('sin obra')); return; }
-    cb(null, datos.content_id);
+// La parte del Modo Arte no siempre contesta a la primera: hasta tres intentos cortos.
+function obraActual(cb, intento) {
+  intento = intento || 1;
+  peticionArte({ request: 'get_current_artwork' }, 2500, function (error, datos) {
+    if (!error && datos && datos.content_id) { cb(null, datos.content_id); return; }
+    if (intento < 3) { setTimeout(function () { obraActual(cb, intento + 1); }, 300); return; }
+    cb(error || new Error('sin obra'));
   });
 }
 function imagenObra(id, cb) {
@@ -204,6 +241,7 @@ function tecla(nombre, cb) {
 }
 
 module.exports = {
+  obras: obras, guardarCopia: guardarCopia, copia: copia,
   leerDatos: leerDatos, guardarDatos: guardarDatos, carpetaDatos: carpetaDatos,
   obraActual: obraActual, imagenObra: imagenObra, ponerModoArte: ponerModoArte, tecla: tecla
 };

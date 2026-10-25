@@ -7,7 +7,7 @@ AeroTizen.config = {
   SERVICE_ID: 'DclHome001.Watcher',
   // En el navegador del Mac se puede apuntar a un servicio de pruebas con ?servicio=URL.
   SERVICE_URL: (location.search.match(/[?&]servicio=([^&]+)/) || [])[1] ? decodeURIComponent(location.search.match(/[?&]servicio=([^&]+)/)[1]) : 'http://127.0.0.1:47790',
-  VERSION: '1.0',
+  VERSION: '1.1',
 
   STORAGE_KEY: 'arthome.preferencias.v1',
 

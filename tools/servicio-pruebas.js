@@ -5,6 +5,7 @@
 var http = require('http');
 var url = require('url');
 var tele = require('../launcher/service/tele');
+var copia = null;  // copia de ajustes en memoria, para probar
 
 function responder(res, codigo, tipo, cuerpo) {
   res.writeHead(codigo, { 'Access-Control-Allow-Origin': '*', 'Content-Type': tipo, 'Cache-Control': 'no-store' });
@@ -18,6 +19,11 @@ http.createServer(function (req, res) {
     tele.imagenObra(String(u.query.id || ''), function (e, img) {
       if (e) { responder(res, 502, 'text/plain', e.message); } else { responder(res, 200, 'image/jpeg', img); }
     });
+  } else if (u.pathname === '/obras') {
+    responder(res, 200, 'application/json', JSON.stringify({ obras: { MY_F0032: { titulo: 'El tres de mayo (listado subido)', autor: 'Francisco de Goya', anio: '1814' } } }));
+  } else if (u.pathname === '/copia') {
+    if (u.query.datos) { copia = { guardada: Date.now(), ajustes: JSON.parse(u.query.datos) }; responder(res, 200, 'application/json', '{"guardada":true}'); }
+    else { responder(res, 200, 'application/json', JSON.stringify(copia || {})); }
   } else if (u.pathname === '/vigilante') {
     responder(res, 200, 'application/json', JSON.stringify({ activo: u.query.activo !== '0', prueba: true }));
   } else {

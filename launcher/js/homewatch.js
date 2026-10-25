@@ -45,7 +45,10 @@
     vigilante: function (activo, cb) { pedir('/vigilante?activo=' + (activo ? '1' : '0'), cb); },
     arte: function (cb) { pedir('/arte', cb, 6000); },
     tecla: function (nombre, cb) { pedir('/tecla?k=' + encodeURIComponent(nombre), cb, 35000); },
-    obra: function (cb) { pedir('/obra', cb, 7000); }
+    obra: function (cb) { pedir('/obra', cb, 10000); },
+    obras: function (cb) { pedir('/obras', cb, 3000); },
+    guardarCopia: function (ajustes) { pedir('/copia?datos=' + encodeURIComponent(JSON.stringify(ajustes)), null, 3000); },
+    leerCopia: function (restaurar, cb) { pedir('/copia' + (restaurar ? '?restaurar=1' : ''), cb, 3000); }
   };
 
   document.addEventListener('visibilitychange', function () { if (!document.hidden) { pedir('/home'); } });

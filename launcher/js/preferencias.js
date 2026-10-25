@@ -9,7 +9,9 @@
 
   p.cargar = function () {
     var datos = copia(cfg.DEFAULTS), guardado = {};
-    try { guardado = JSON.parse(localStorage.getItem(cfg.STORAGE_KEY)) || {}; } catch (e) { guardado = {}; }
+    var crudo = null;
+    try { crudo = localStorage.getItem(cfg.STORAGE_KEY); guardado = JSON.parse(crudo) || {}; } catch (e) { guardado = {}; }
+    p.nuevo = !crudo;  // sin ajustes guardados: recién instalado o reinstalado
     Object.keys(datos).forEach(function (k) { if (guardado[k] !== undefined) { datos[k] = guardado[k]; } });
     Object.keys(datos).forEach(function (k) { p[k] = datos[k]; });
     p.aplicarAcento();
@@ -20,6 +22,18 @@
     var out = {};
     Object.keys(cfg.DEFAULTS).forEach(function (k) { out[k] = p[k]; });
     try { localStorage.setItem(cfg.STORAGE_KEY, JSON.stringify(out)); } catch (e) { /* almacenamiento lleno o bloqueado */ }
+    // Copia de seguridad en el servicio (y de ahí al Mac), agrupando cambios seguidos.
+    clearTimeout(p.temporizadorCopia);
+    p.temporizadorCopia = setTimeout(function () { if (A.homewatch) { A.homewatch.guardarCopia(out); } }, 2000);
+  };
+
+  // Recuperar una copia (de la tele o subida desde el Mac).
+  p.aplicarCopia = function (copia) {
+    var ajustes = copia && copia.ajustes;
+    if (!ajustes || typeof ajustes !== 'object') { return false; }
+    try { localStorage.setItem(cfg.STORAGE_KEY, JSON.stringify(ajustes)); } catch (e) { return false; }
+    p.cargar();
+    return true;
   };
 
   // La primera vez, elige la fila del inicio y las escondidas por nombre.

@@ -35,6 +35,7 @@
     if (document.hidden) { return; }
     A.cabecera.pintar();
     A.entradas.cargar(A.redibujar);
+    A.arte.cargarObras();
     A.arte.refrescar();
   });
 
@@ -51,11 +52,17 @@
   A.prefs.cargar();
   A.cabecera.start();
   A.network.start();
+  A.arte.cargarObras();
   A.arte.refrescar();
-  setInterval(function () { if (!document.hidden) { A.arte.refrescar(); } }, 120000);
   A.apps.load(function () {
-    A.prefs.completar(A.apps.all);
-    A.entradas.cargar(function () { A.ir('inicio'); });
+    function seguir() {
+      A.prefs.completar(A.apps.all);
+      A.entradas.cargar(function () { A.ir('inicio'); });
+    }
+    // Recién instalado: si el servicio guarda una copia de los ajustes, se recupera.
+    if (A.prefs.nuevo) {
+      A.homewatch.leerCopia(false, function (copia) { if (A.prefs.aplicarCopia(copia)) { A.toast('Ajustes recuperados de la copia'); } seguir(); });
+    } else { seguir(); }
     A.homewatch.start();
     A.homewatch.vigilante(A.prefs.vigilante);
     setTimeout(function () { A.homewatch.reportApps(A.apps.realIds); }, 1500);

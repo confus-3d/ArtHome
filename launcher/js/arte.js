@@ -42,12 +42,28 @@
     img.src = cfg.SERVICE_URL + '/obra.jpg?id=' + encodeURIComponent(id);
   }
 
+  // Listado de obras: el que va dentro de la app, completado con el subido desde el Mac.
+  function cargarObras() {
+    A.homewatch.obras(function (datos) {
+      if (!datos || !datos.obras) { return; }
+      var nuevas = {};
+      Object.keys(window.OBRAS || {}).forEach(function (id) { nuevas[id] = window.OBRAS[id]; });
+      Object.keys(datos.obras).forEach(function (id) {
+        var o = datos.obras[id];
+        if (o && o.titulo) { nuevas[id] = { t: o.titulo, a: o.autor || '', y: o.anio || '' }; }
+      });
+      window.OBRAS = nuevas;
+      cartela();
+    });
+  }
+
   A.arte = {
+    cargarObras: cargarObras,
     redibujar: function () { dibujar(); cartela(); },
     refrescar: function () {
       A.homewatch.obra(function (datos) {
         // Si la tele no contesta (canal ocupado, recién encendida), se reintenta en un rato.
-        if (!datos || !datos.id) { clearTimeout(A.arte.reintento); A.arte.reintento = setTimeout(A.arte.refrescar, 15000); return; }
+        if (!datos || !datos.id) { clearTimeout(A.arte.reintento); A.arte.reintento = setTimeout(A.arte.refrescar, 8000); return; }
         if (datos.id !== actual) { actual = datos.id; cargar(actual); }
         cartela();
       });
