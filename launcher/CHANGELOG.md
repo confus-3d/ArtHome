@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.4.0](https://github.com/confus-3d/ArtHome/compare/launcher-v2.3.0...launcher-v2.4.0) (2026-10-25)
+
+
+### Features
+
+* **launcher:** manage Home favourites from app tiles ([#26](https://github.com/confus-3d/ArtHome/issues/26)) ([2716815](https://github.com/confus-3d/ArtHome/commit/2716815559db61b915e53a274d58229491119708))
+* **launcher:** migrate Settings to Preact and TypeScript ([#36](https://github.com/confus-3d/ArtHome/issues/36)) ([27c0919](https://github.com/confus-3d/ArtHome/commit/27c09193035955a1e39c5da71619743655ae22f4))
+* release CLI and launcher independently ([#23](https://github.com/confus-3d/ArtHome/issues/23)) ([c73293b](https://github.com/confus-3d/ArtHome/commit/c73293b3ceb8a8721fa85e95adaba8136fab22ec))
+
 ## [2.3.0](https://github.com/helalaou/AeroTizen/compare/launcher-v2.2.0...launcher-v2.3.0) (2026-10-25)
 
 
