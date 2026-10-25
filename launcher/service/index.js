@@ -19,7 +19,7 @@ var createArtMode = require('./artmode');
 var tele = require('./tele');
 var SELF = 'DclHome001.Home';
 var HIDDEN_GRACE = 250;         // non-Frame: Samsung Home appears almost at once
-var FRAME_HIDDEN_GRACE = 1500;  // Frame: give Art Mode time to report before reclaiming
+var FRAME_HIDDEN_GRACE = 800;   // Frame: margen para que el Modo Arte avise (ArtHome: antes 1500)
 var APP_GRACE = 2500;
 var WATCH_STOP_GRACE = 1500;    // a watched app must stay stopped this long before it's dropped
 var WATCH_COVER_GRACE = 10000;  // an app the launcher opened may take this long to cover it
@@ -255,7 +255,9 @@ function launchSelf(why) {
     if (value !== 'off') { cancel(candidate, 'fresh Art status: ' + value); return; }
     recheck(candidate, function () {
       if (!current(candidate)) { return; }
-      freshOff(function (finalValue) {
+      // ArtHome: una sola pregunta fresca (la de arriba) en vez de dos; un aviso de la tele de que
+      // el Modo Arte se ha encendido sigue cancelando el candidato.
+      (function (seguir) { seguir('off'); })(function (finalValue) {
         if (!current(candidate)) { return; }
         if (finalValue !== 'off' || !permitted()) { cancel(candidate, 'final Art check blocked'); return; }
         // Let a veto frame already buffered after this reply cancel the candidate.

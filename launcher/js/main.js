@@ -52,13 +52,15 @@
   A.prefs.cargar();
   A.cabecera.start();
   A.network.start();
+  A.arte.desdeCache();
+  if (!A.prefs.nuevo && A.apps.desdeCache()) { A.ir('inicio'); }  // se ve al instante
   A.arte.cargarObras();
   A.arte.refrescar();
   A.apps.load(function () {
     function seguir() {
       A.prefs.completar(A.apps.all);
       A.prefs.guardar();  // también deja una copia de seguridad al arrancar
-      A.entradas.cargar(function () { A.ir('inicio'); });
+      A.entradas.cargar(function () { if (A.pantalla === 'inicio') { A.inicio.render(); } else { A.ir('inicio'); } });
     }
     // Recién instalado: si el servicio guarda una copia de los ajustes, se recupera.
     if (A.prefs.nuevo) {

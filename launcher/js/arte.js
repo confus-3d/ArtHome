@@ -9,6 +9,10 @@
   var DESENFOQUE = { suave: 3, media: 7, fuerte: 13 };
   var ANCHO = 384, ALTO = 216;
   var actual = null, imagen = null;
+  var CACHE_FONDO = 'arthome.fondo.v1';
+  function guardarFondo() {
+    try { localStorage.setItem(CACHE_FONDO, JSON.stringify({ id: actual, img: A.$('fondo').toDataURL('image/jpeg', 0.75) })); } catch (e) {}
+  }
 
   function dibujar() {
     var lienzo = A.$('fondo');
@@ -24,6 +28,7 @@
       var r = Math.max(ANCHO / imagen.width, ALTO / imagen.height) * 1.08, w = imagen.width * r, h = imagen.height * r;
       ctx.drawImage(imagen, (ANCHO - w) / 2, (ALTO - h) / 2, w, h);
       lienzo.classList.add('listo');
+      guardarFondo();
     } catch (e) { /* imagen no disponible: queda el fondo liso */ }
   }
 
@@ -38,6 +43,7 @@
 
   function cargar(id) {
     var img = new Image();
+    img.crossOrigin = 'anonymous';  // el servicio permite leerla; así el lienzo se puede guardar
     img.onload = function () { imagen = img; dibujar(); };
     img.src = cfg.SERVICE_URL + '/obra.jpg?id=' + encodeURIComponent(id);
   }
@@ -57,9 +63,28 @@
     });
   }
 
+  // Arranque rápido: el último fondo ya difuminado y su cartela, mientras llega la obra actual.
+  function desdeCache() {
+    try {
+      var c = JSON.parse(localStorage.getItem(CACHE_FONDO));
+      if (!c || !c.img) { return; }
+      actual = c.id;
+      var img = new Image();
+      img.onload = function () {
+        var lienzo = A.$('fondo');
+        lienzo.width = ANCHO; lienzo.height = ALTO;
+        lienzo.getContext('2d').drawImage(img, 0, 0, ANCHO, ALTO);
+        lienzo.classList.add('listo');
+      };
+      img.src = c.img;
+      cartela();
+    } catch (e) {}
+  }
+
   A.arte = {
+    desdeCache: desdeCache,
     cargarObras: cargarObras,
-    redibujar: function () { dibujar(); cartela(); },
+    redibujar: function () { if (imagen) { dibujar(); } else if (actual) { cargar(actual); } cartela(); },
     refrescar: function () {
       A.homewatch.obra(function (datos) {
         // Si la tele no contesta (canal ocupado, recién encendida), se reintenta en un rato.

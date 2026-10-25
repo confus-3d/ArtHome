@@ -31,7 +31,7 @@
   A.homewatch = {
     start: start,
     // El launcher va a abrir `appId`; Home dentro de ella debe volver aquí.
-    watch: function (appId) { pedir('/watch?id=' + encodeURIComponent(A.catalog.preloadedStoreId(appId) || appId)); },
+    watch: function (appId) { pedir('/watch?id=' + encodeURIComponent(A.catalog.preloadedStoreId(appId) || appId)); },  // appId ya es el número de tienda si se conoce
     reportApps: function (ids) { pedir('/apps?ids=' + ids.map(encodeURIComponent).join(',')); },
     // Salida al inicio de Samsung hasta que se vuelva a abrir ArtHome.
     useSamsungHome: function () {

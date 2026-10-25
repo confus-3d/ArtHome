@@ -47,6 +47,20 @@
     return 'hsl(' + h + ', 55%, 62%)';
   };
 
+  // Arranque rápido: la tele cierra ArtHome cuando le falta memoria; al volver se pinta primero
+  // con la última lista guardada y luego se actualiza.
+  var CACHE_APPS = 'arthome.apps.v1';
+  apps.desdeCache = function () {
+    try {
+      var guardadas = JSON.parse(localStorage.getItem(CACHE_APPS));
+      if (guardadas && guardadas.all && guardadas.all.length) { apps.all = guardadas.all; apps.realIds = guardadas.realIds || []; return true; }
+    } catch (e) {}
+    return false;
+  };
+  function guardarCache() {
+    try { localStorage.setItem(CACHE_APPS, JSON.stringify({ all: apps.all, realIds: apps.realIds })); } catch (e) {}
+  }
+
   apps.load = function (done) {
     if (!tz || !tz.application) {  // vista previa en el navegador: las apps de la tele de Paco
       apps.all = ['Netflix', 'Prime Video', 'Disney+', 'Movistar Plus', 'Apple TV', 'SkyShowtime', 'Crunchyroll',
@@ -57,12 +71,20 @@
     }
     tz.application.getAppsInfo(function (list) {
       apps.realIds = list.filter(function (a) { return (isRealApp(a) || a.id === cfg.HBBTV_APP_ID) && !/service|DclHome001/i.test(a.id); })
-        .map(function (a) { return A.catalog.preloadedStoreId(a.id) || a.id; });
+        .map(function (a) { return apps.idVigilancia({ id: a.id, icon: a.iconPath || '' }); });
       apps.all = list.filter(function (a) { return isRealApp(a) && a.name && !cfg.HIDDEN_APPS.test(a.id) && !cfg.HIDDEN_APPS.test(a.name); })
         .map(function (a) { return { id: a.id, name: a.name, icon: a.iconPath || '' }; })
         .sort(function (a, b) { return a.name.localeCompare(b.name); });
+      guardarCache();
       done();
-    }, function () { apps.all = []; done(); });
+    }, function () { if (!apps.all.length) { apps.all = []; } done(); });
+  };
+
+  // Número de tienda de una app: la tele solo dice si está «visible» por ese número, no por su
+  // nombre interno (comprobado con Disney+). Sale de la ruta de la carátula o del catálogo.
+  apps.idVigilancia = function (app) {
+    var cache = (app.icon || '').match(/apps_icon\/(?:all|FirstScreen)\/(\d+)\//);
+    return (cache && cache[1]) || A.catalog.preloadedStoreId(app.id) || app.id;
   };
 
   apps.byId = function (id) {
@@ -87,7 +109,7 @@
       } catch (e) { A.toast('No se pudo abrir ' + nombre); }
       return;
     }
-    A.homewatch.watch(app.id);
+    A.homewatch.watch(apps.idVigilancia(app));
     tz.application.launch(app.id, null, function () { A.toast('No se pudo abrir ' + nombre); });
   };
 })(window.AeroTizen);
