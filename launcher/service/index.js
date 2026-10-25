@@ -19,7 +19,7 @@ var createArtMode = require('./artmode');
 var tele = require('./tele');
 var SELF = 'DclHome001.Home';
 var HIDDEN_GRACE = 250;         // non-Frame: Samsung Home appears almost at once
-var FRAME_HIDDEN_GRACE = 150;   // Frame: margen para que el Modo Arte avise (ArtHome: antes 1500)
+var FRAME_HIDDEN_GRACE = 1500;  // Frame: margen para que el Modo Arte avise antes de volver a abrir
 var APP_GRACE = 2500;
 var WATCH_STOP_GRACE = 1500;    // a watched app must stay stopped this long before it's dropped
 var WATCH_COVER_GRACE = 10000;  // an app the launcher opened may take this long to cover it
@@ -192,12 +192,8 @@ function permitted() {
 function freshOff(cb) {
   if (state.guard.capability === 'non-frame' || state.guard.capability === 'not-advertised') { cb('off'); return; }
   if (state.guard.capability !== 'frame') { cb('unknown'); return; }
-  // ArtHome: si hay una respuesta reciente («apagado», de hace menos de 90 s) con el canal del
-  // Modo Arte abierto, se usa sin preguntar; la tele avisa sola si el Modo Arte se enciende y ese
-  // aviso cancela la vuelta. Si no, se pregunta como antes.
-  var a = art.getState(), ultima = a.latest;
-  if (a.phase === 'querying' && a.artMode === 'off' && ultima && ultima.value === 'off' &&
-      ultima.reason === 'matching-reply' && Date.now() - ultima.at < 90000) { cb('off'); return; }
+  // Siempre una pregunta fresca: fiarse de la última respuesta abría ArtHome encima del Modo
+  // Arte al pasar a él (fallo visto el 2026-10-25).
   art.fresh(cb);
 }
 function current(candidate) {
@@ -257,9 +253,7 @@ function launchSelf(why) {
     if (value !== 'off') { cancel(candidate, 'fresh Art status: ' + value); return; }
     recheck(candidate, function () {
       if (!current(candidate)) { return; }
-      // ArtHome: una sola pregunta fresca (la de arriba) en vez de dos; un aviso de la tele de que
-      // el Modo Arte se ha encendido sigue cancelando el candidato.
-      (function (seguir) { seguir('off'); })(function (finalValue) {
+      freshOff(function (finalValue) {
         if (!current(candidate)) { return; }
         if (finalValue !== 'off' || !permitted()) { cancel(candidate, 'final Art check blocked'); return; }
         // Let a veto frame already buffered after this reply cancel the candidate.
